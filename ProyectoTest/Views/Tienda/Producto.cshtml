@@ -1,0 +1,40 @@
+﻿@model ProyectoTest.Models.Producto
+@{
+    ViewBag.Title = "Producto";
+    Layout = "~/Views/Shared/_Layout_Tienda.cshtml";
+}
+
+<section class="py-5">
+    <div class="container px-4 px-lg-5 my-5">
+        <div class="row gx-4 gx-lg-5 align-items-center">
+            <div class="col-md-6"><img class="card-img-top mb-5 mb-md-0" src="data:image/@Html.DisplayTextFor(model => model.extension);base64,@Html.DisplayTextFor(model => model.base64)" alt="..."></div>
+            <div class="col-md-6">
+                <div class="small mb-1">@Html.DisplayTextFor(model => model.oMarca.Descripcion)</div>
+                <h1 class="display-5 fw-bolder">@Html.DisplayTextFor(model => model.Nombre)</h1>
+                <div class="fs-5 mb-5">
+                    <span>S/. @Html.DisplayTextFor(model => model.Precio)</span>
+                </div>
+                <p class="lead">@Html.DisplayTextFor(model => model.Descripcion)</p>
+                <div class="d-flex">
+                    <a href="@Url.Action("Index", "Tienda")" class="btn btn-danger w-50 text-center me-3">
+                        <i class="fas fa-undo-alt"></i> Volver
+                    </a>
+                    @{
+                        if (((ProyectoTest.Models.Usuario)Session["Usuario"]).EsAdministrador == false)
+                        {
+                            <button class="btn btn-success btn-agregar-carrito flex-shrink-0 w-50 " type="button" data-idproducto="@Html.DisplayTextFor(model => model.IdProducto)">
+                                <i class="fas fa-cart-plus"></i> Agregar al carrito
+                            </button>
+                        }
+                    }
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section scripts{
+    
+
+}

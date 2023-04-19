@@ -1,0 +1,437 @@
+﻿
+@{
+    ViewBag.Title = "Carrito";
+    Layout = "~/Views/Shared/_Layout_Tienda.cshtml";
+}
+
+<div class="row mt-5 pt-5 p-2">
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="product-details mr-2">
+                        <div class="d-flex justify-content-between">
+                            <span class="ml-2">Detalle Compra</span>
+                            <a class="btn btn-danger" href="@Url.Action("Index","Tienda")">Volver</a>
+                        </div>
+                        <hr class="mt-2 mb-2">
+                        <div class="justify-content-start mb-2">
+                            Tienes <span id="cantidad-articulos" class="ml-1">0</span> artículo(s) en tu carrito
+                        </div>
+                        <div id="productos-seleccionados">
+
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <div class="row">
+
+                                <div class="col-12">
+                                    <div class="payment-info">
+                                        <div class="d-flex justify-content-between align-items-center"><span>Detalle de Tarjeta</span></div>
+                                        <span class="type d-block mt-3 mb-1">Tipo de tarjeta</span>
+                                        <label class="radio"> <input type="radio" name="card" value="payment" checked> <span><img width="60" src="@Url.Content("~/Imagenes/Tarjetas/master.png")" /></span> </label>
+                                        <label class="radio ml-2"> <input type="radio" name="card" value="payment"> <span><img width="60" src="@Url.Content("~/Imagenes/Tarjetas/visa.png")" /></span> </label>
+                                        <div>
+                                            <label class="credit-card-label mb-1 mt-2">Nombre del Titular</label>
+                                            <input type="text" class="form-control credit-inputs" placeholder="Nombre" id="trj_nombre">
+                                        </div>
+                                        <div>
+                                            <label class="credit-card-label mb-1 mt-2">Número de tarjeta</label>
+                                            <input type="text" class="form-control credit-inputs" placeholder="0000 0000 0000 0000" id="trj_numero">
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="credit-card-label mb-1 mt-2">Vigencia</label>
+                                                <input type="text" class="form-control credit-inputs" placeholder="12/24" id="trj_vigencia">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="credit-card-label mb-1 mt-2">CVV</label>
+                                                <input type="text" class="form-control credit-inputs" placeholder="342" id="trj_cvv">
+                                            </div>
+                                        </div>
+                                        <hr class="line">
+                                        <div class="d-flex justify-content-between information"><span>Total a Pagar</span><span id="totalPagar">S/. 0</span></div>
+                                        <button class="btn btn-primary btn-block mt-3" id="btnProcesarPago" type="button">Procesar Pago</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!--MODAL-->
+
+<div class="modal fade" id="mdprocesopago" data-bs-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Datos para envio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-1">
+                        <label for="recipient-name" class="col-form-label pt-0">Departamento:</label>
+                        <select id="cboDepartamento" class="form-select control-validar"></select>
+                    </div>
+                    <div class="mb-1">
+                        <label for="recipient-name" class="col-form-label">Provincia:</label>
+                        <select id="cboProvincia" class="form-select control-validar"></select>
+                    </div>
+                    <div class="mb-1">
+                        <label for="recipient-name" class="col-form-label">Distrito:</label>
+                        <select id="cboDistrito" class="form-select control-validar"></select>
+                    </div>
+                    <div class="mb-1">
+                        <label for="message-text" class="col-form-label">Contacto:</label>
+                        <input type="text" class="form-control control-validar" autocomplete="off" id="txtContacto">
+                    </div>
+                    <div class="mb-1">
+                        <label for="message-text" class="col-form-label">Telefono:</label>
+                        <input type="text" class="form-control control-validar" autocomplete="off" id="txtTelefono">
+                    </div>
+                    <div class="mb-1">
+                        <label for="message-text" class="col-form-label">Direccion:</label>
+                        <input type="text" class="form-control control-validar" autocomplete="off" id="txtDireccion">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Regresar</button>
+                <button type="button" class="btn btn-success" id="btnConfirmarCompra">Confirmar Compra</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts{
+    <script>
+
+
+        $(document).ready(function () {
+            jQuery.ajax({
+                url: '@Url.Action("ObtenerCarrito", "Tienda")',
+                type: "GET",
+                data: null,
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    $.LoadingOverlay("hide");
+                    if (data.lista != null) {
+                        $.each(data.lista, function (i, item) {
+                            $("<div>").addClass("card mb-2 card-producto").append(
+
+                                $("<div>").addClass("card-body").append(
+
+                                    $("<div>").addClass("row").append(
+                                        $("<div>").addClass("col-1").append(
+                                            $("<img>").addClass("rounded").attr({ "src": "data:image/" + item.oProducto.extension + ";base64," + item.oProducto.base64, "width": "50" })
+                                        ),
+                                        $("<div>").addClass("col-7").append(
+                                            $("<div>").addClass("ml-2").append(
+                                                $("<span>").addClass("font-weight-bold d-block").text(item.oProducto.oMarca.Descripcion),
+                                                $("<span>").addClass("spec").text(item.oProducto.Nombre),
+                                                $("<span>").addClass("float-end").text("Precio : S./" + item.oProducto.Precio )
+                                            )
+                                        ),
+                                        $("<div>").addClass("col-3").append(
+                                            $("<div>").addClass("d-flex justify-content-end controles").append(
+                                                $("<button>").addClass("btn btn-outline-secondary btn-restar rounded-0").append($("<i>").addClass("fas fa-minus")).attr({ "type": "button" }),
+                                                $("<input>").addClass("form-control input-cantidad p-1 text-center rounded-0").css({ "width": "40px" }).attr({ "disabled": "disabled" }).val("1").data("precio", item.oProducto.Precio).data("idproducto", item.oProducto.IdProducto),
+                                                $("<button>").addClass("btn btn-outline-secondary btn-sumar rounded-0").append($("<i>").addClass("fas fa-plus")).attr({ "type": "button" })
+                                            )
+                                        ),
+                                        $("<div>").addClass("col-1").append(
+                                            $("<button>").addClass("btn btn-outline-danger btn-eliminar").append($("<i>").addClass("far fa-trash-alt")).data("informacion", { _IdCarrito: item.IdCarrito, _IdProducto: item.oProducto.IdProducto}),
+                                        )
+                                    )
+                                )
+                            ).appendTo("#productos-seleccionados");
+
+
+                        })
+
+                        obtenerPreciosPago();
+                        obtenerCantidadProductos();
+                    }
+                },
+                error: function (error) {
+                    console.log(error)
+                },
+                beforeSend: function () {
+                    $.LoadingOverlay("show");
+                },
+            });
+            ListarDepartamento();
+        })
+
+
+        $(document).on('click', '.btn-sumar', function (event) {
+            var div = $(this).parent("div.controles");
+            var input = $(div).find("input.input-cantidad");
+            var cantidad = parseInt($(input).val()) + 1;
+            $(input).val(cantidad);
+            obtenerPreciosPago()
+        });
+
+        $(document).on('click', '.btn-restar', function (event) {
+            var div = $(this).parent("div.controles");
+            var input = $(div).find("input.input-cantidad");
+            var cantidad = parseInt($(input).val()) -1;
+            if (cantidad >= 1) {
+                $(input).val(cantidad);
+            }
+            obtenerPreciosPago()
+        });
+
+
+        $(document).on('click', '.btn-eliminar', function (event) {
+            var json = $(this).data("informacion");
+            var card_producto = $(this).parents("div.card-producto");
+
+
+            jQuery.ajax({
+                url: '@Url.Action("EliminarCarrito", "Tienda")',
+                type: "POST",
+                data: JSON.stringify({ IdCarrito: json._IdCarrito, IdProducto: json._IdProducto }),
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    if (data.resultado) {
+                        card_producto.remove();
+                        obtenerPreciosPago();
+                        obtenerCantidadProductos();
+                        obtenerCantidad();
+                    } else {
+                        alert("No se pudo eliminar")
+                    }
+                },
+                error: function (error) {
+                    console.log(error)
+                },
+                beforeSend: function () {
+
+                },
+            });
+
+        })
+
+
+        function obtenerPreciosPago() {
+
+            var total = 0;
+            $("input.input-cantidad").each(function (index) {
+                var precio = parseFloat($(this).val()) * parseFloat($(this).data("precio"));
+                total = total + precio;
+            });
+            $("#totalPagar").text("S/. " + total.toString());
+        }
+        function obtenerCantidadProductos() {
+            $("#cantidad-articulos").text(" " + $("#productos-seleccionados > div.card").length.toString() + " ");
+
+            if ($("#productos-seleccionados > div.card").length == 0) {
+               $("#btnProcesarPago").prop("disabled", true);
+            }
+        }
+
+        $("#btnProcesarPago").on("click", function (e) {
+            $("#cboDepartamento").val($("#cboDepartamento option:first").val());
+            $("#cboProvincia").val($("#cboProvincia option:first").val());
+            $("#cboDistrito").val($("#cboDistrito option:first").val());
+            $("#txtContacto").val("");
+            $("#txtTelefono").val("");
+            $("#txtDireccion").val("");
+            $(".control-validar").removeClass("border border-danger");
+
+
+            if ($("#trj_nombre").val().trim() == "") {
+                $("#mensaje-error").text("Debe ingresar nombre del titular");
+                $('#toast-alerta').toast('show');
+                return;
+            } else if ($("#trj_numero").val().trim() == "") {
+                $("#mensaje-error").text("Debe ingresar número de la tarjeta");
+                $('#toast-alerta').toast('show');
+                return;
+            } else if ($("#trj_vigencia").val().trim() == "") {
+                $("#mensaje-error").text("Debe ingresar vigencia de la tarjeta");
+                $('#toast-alerta').toast('show');
+                return;
+            } else if ($("#trj_cvv").val().trim() == "") {
+                $("#mensaje-error").text("Debe ingresar CVV de la tarjeta");
+                $('#toast-alerta').toast('show');
+                return;
+            }
+
+            $("#mdprocesopago").modal("show");
+
+        })
+
+        function ListarDepartamento() {
+            jQuery.ajax({
+                url: '@Url.Action("ObtenerDepartamento", "Tienda")',
+                type: "POST",
+                data: null,
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    $("<option>").attr({ "value": "00","disabled":"disabled","selected":"true" }).text("Seleccionar").appendTo("#cboDepartamento");
+                    if (data.lista != null) {
+                        $.each(data.lista, function (i, v) {
+                            $("<option>").attr({ "value": v.IdDepartamento }).text(v.Descripcion).appendTo("#cboDepartamento");
+                        });
+                    }
+                    ListarProvincia();
+                },
+                error: function (error) {
+                    console.log(error)
+                },
+                beforeSend: function () {
+                },
+            });
+        }
+
+        $("#cboDepartamento").on("change", function () {
+            ListarProvincia();
+        });
+
+        function ListarProvincia() {
+            jQuery.ajax({
+                url: '@Url.Action("ObtenerProvincia", "Tienda")',
+                type: "POST",
+                data: JSON.stringify({ _IdDepartamento: $("#cboDepartamento option:selected").val() }),
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    $("#cboProvincia").html("");
+                    $("<option>").attr({ "value": "00","disabled":"disabled","selected":"true" }).text("Seleccionar").appendTo("#cboProvincia");
+                    if (data.lista != null) {
+                        $.each(data.lista, function (i, v) {
+                            $("<option>").attr({ "value": v.IdProvincia}).text(v.Descripcion).appendTo("#cboProvincia");
+                        });
+                    }
+                    ListarDistrito();
+                },
+                error: function (error) {
+                    console.log(error)
+                },
+                beforeSend: function () {
+                },
+            });
+        }
+
+        $("#cboProvincia").on("change", function () {
+            ListarDistrito();
+        });
+
+        function ListarDistrito() {
+            jQuery.ajax({
+                url: '@Url.Action("ObtenerDistrito", "Tienda")',
+                type: "POST",
+                data: JSON.stringify({ _IdProvincia: $("#cboProvincia option:selected").val(),_IdDepartamento: $("#cboDepartamento option:selected").val() }),
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    $("#cboDistrito").html("");
+                    $("<option>").attr({ "value": "00", "disabled": "disabled", "selected": "true" }).text("Seleccionar").appendTo("#cboDistrito");
+                    if (data.lista != null) {
+                        $.each(data.lista, function (i, v) {
+                            $("<option>").attr({ "value": v.IdProvincia }).text(v.Descripcion).appendTo("#cboDistrito");
+                        });
+                    }
+                },
+                error: function (error) {
+                    console.log(error)
+                },
+                beforeSend: function () {
+                },
+            });
+        }
+
+        $("#btnConfirmarCompra").on("click", function (e) {
+  
+            var falta_ingresar_datos = false;
+
+            $(".control-validar").removeClass("border border-danger");
+
+            $(".control-validar").each(function (i) {
+                if ($(this).is('input')) {
+                    if ($(this).val() == "") {
+                        $(this).addClass("border border-danger")
+                        falta_ingresar_datos = true;
+                    }
+                } else if ($(this).is('select')) {
+                    if ($(this).children("option:selected").val() == "00") {
+                        $(this).addClass("border border-danger")
+                        falta_ingresar_datos = true;
+                    }
+                }
+            });
+
+            if (!falta_ingresar_datos) {
+
+                var detalle = [];
+                var total = 0;
+                $("input.input-cantidad").each(function (index) {
+                    var precio = parseFloat($(this).val()) * parseFloat($(this).data("precio"));
+                    detalle.push({
+                        IdProducto: parseInt($(this).data("idproducto")),
+                        Cantidad: parseInt($(this).val()),
+                        Total: precio
+                    });
+
+                    total = total + precio;
+                });
+
+                var request = {
+                    oCompra: {
+                        TotalProducto: $("#productos-seleccionados > div.card").length,
+                        Total: total,
+                        Contacto: $("#txtContacto").val(),
+                        Telefono: $("#txtTelefono").val(),
+                        Direccion: $("#txtDireccion").val(),
+                        IdDistrito: $("#cboDistrito").val(),
+                        oDetalleCompra: detalle
+                    }
+
+                }
+                
+                jQuery.ajax({
+                    url: '@Url.Action("RegistrarCompra", "Tienda")',
+                    type: "POST",
+                    data: JSON.stringify(request),
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data) {
+                        if (data.resultado) {
+                            swal("Compra Realizada", "Pronto te informaremos la entrega de tu pedido", "success").then((value) => {
+                                 window.location.href = "@Url.Action("Index", "Tienda")"
+                            });
+                        } else {
+                            swal("Lo sentimos", "No se  pudo completar la compra", "warning");
+                        }
+                    },
+                    error: function (error) {
+                        console.log(error)
+                    },
+                    beforeSend: function () {
+                    },
+                });
+            }
+        })
+
+
+    </script>
+
+
+}
